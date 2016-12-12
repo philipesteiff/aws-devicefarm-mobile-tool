@@ -18,6 +18,8 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutionException
 
 class DeviceFarm(val awsClient: AWSDeviceFarmAsyncClient) {
 
@@ -112,6 +114,7 @@ class DeviceFarm(val awsClient: AWSDeviceFarmAsyncClient) {
                             "SUCCEEDED" -> {
                                 processingSuccess.invoke()
                             }
+                            "FAILED" -> throw Exception("Processing upload failed.")
                         }
                     }
                 }
@@ -127,22 +130,13 @@ class DeviceFarm(val awsClient: AWSDeviceFarmAsyncClient) {
                     .withTestPackageArn(testArn)
             )
         }.let {
-            awsClient
-                    .scheduleRunAsync(it)
-                    .get().let {
-                println("bah")
+            try {
+                awsClient.scheduleRunAsync(it).get()
+            } catch (exception: ExecutionException) {
+                exception.cause?.printStackTrace()
             }
-
         }
-
-
     }
-
-    fun listUploads(projectArn: String) = awsClient
-            .listUploads(ListUploadsRequest().withArn(projectArn))
-            .uploads
-
-    class DeviceFarmException(message: String) : Exception("Error: $message")
 
     class Builder private constructor() {
 
