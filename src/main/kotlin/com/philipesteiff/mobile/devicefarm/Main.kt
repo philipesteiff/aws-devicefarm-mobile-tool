@@ -21,6 +21,7 @@ fun main(args: Array<String>) {
                 val devicePoolArn = devicePool.arn
                 println("Retrieved devicePool: $devicePool")
 
+                // TODO Remove callbackhell
                 client.upload(projectArn, appPath, AWSUploadType.ANDROID_APP) { upload ->
                     val appArn = upload.arn
                     println("Start upload App: $upload")
@@ -31,7 +32,9 @@ fun main(args: Array<String>) {
                             println("Start upload test: $upload")
                             client.uploadProcessingStatus(testArn) {
                                 println("Upload test finished: $upload")
-                                client.createRunTest(projectArn, appArn, testArn, devicePoolArn)
+                                client.createRunTest(projectArn, appArn, testArn, devicePoolArn) { run ->
+                                    client.checkRun(run.arn)
+                                }
                             }
                         }
                     }

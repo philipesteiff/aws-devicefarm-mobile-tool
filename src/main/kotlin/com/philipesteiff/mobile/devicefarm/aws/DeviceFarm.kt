@@ -61,11 +61,11 @@ class DeviceFarm(val awsClient: AWSDeviceFarmAsyncClient) {
             .firstOrNull()
             ?: throw RuntimeException("Device Pool `$devicePoolName` not found.")
 
-    fun upload(projectArn: String, path: String, AWSUploadType: AWSUploadType, uploadSuccess: (Upload) -> Unit) {
+    fun upload(projectArn: String, path: String, awsUploadType: AWSUploadType, uploadSuccess: (Upload) -> Unit) {
         return awsClient.createUploadAsync(
                 CreateUploadRequest()
                         .withProjectArn(projectArn)
-                        .withType(AWSUploadType.type)
+                        .withType(awsUploadType.type)
                         .withName(Paths.get(path).fileName.toString())
                         .withContentType("application/octet-stream"))
                 .get()
@@ -97,31 +97,34 @@ class DeviceFarm(val awsClient: AWSDeviceFarmAsyncClient) {
     }
 
     fun uploadProcessingStatus(appArn: String, processingSuccess: () -> Unit) {
-        awsClient
-                .getUploadAsync(GetUploadRequest().withArn(appArn))
-                .get()
-                .let {
-                    it.upload.apply {
-                        println("Upload status: $status")
-                        when (status) {
-                            "INITIALIZED", "PROCESSING" -> {
-                                Timer().schedule(object : TimerTask() {
-                                    override fun run() {
-                                        uploadProcessingStatus(appArn, processingSuccess)
-                                    }
-                                }, 2L)
+        awsClient.getUploadAsync(GetUploadRequest().withArn(appArn)).get().let {
+            it.upload.apply {
+                println("Upload status: $status")
+                when (status) {
+                    "INITIALIZED", "PROCESSING" -> {
+                        Timer().schedule(object : TimerTask() {
+                            override fun run() {
+                                uploadProcessingStatus(appArn, processingSuccess)
                             }
-                            "SUCCEEDED" -> {
-                                processingSuccess.invoke()
-                            }
-                            "FAILED" -> throw Exception("Processing upload failed.")
-                        }
+                        }, 2L)
                     }
+                    "SUCCEEDED" -> {
+                        processingSuccess.invoke()
+                    }
+                    "FAILED" -> throw Exception("Processing upload failed.")
                 }
+            }
+        }
     }
 
-    fun createRunTest(projectArn: String, appArn: String, testArn: String, devicePoolArn: String) {
-        ScheduleRunRequest().apply {
+    fun createRunTest(
+            projectArn: String,
+            appArn: String,
+            testArn: String,
+            devicePoolArn: String,
+            createRunSuccess: (Run) -> Unit
+    ) {
+        return ScheduleRunRequest().apply {
             withProjectArn(projectArn)
             withAppArn(appArn)
             withDevicePoolArn(devicePoolArn)
@@ -131,10 +134,40 @@ class DeviceFarm(val awsClient: AWSDeviceFarmAsyncClient) {
             )
         }.let {
             try {
-                awsClient.scheduleRunAsync(it).get()
+                awsClient.scheduleRunAsync(it).get().let { scheduleRunResult ->
+                    scheduleRunResult.run.let {
+                        println("RunTest status: ${it.status}")
+                        createRunSuccess(it)
+                    }
+                }
             } catch (exception: ExecutionException) {
                 exception.cause?.printStackTrace()
             }
+        }
+    }
+
+    fun checkRun(runArn: String) {
+        try {
+            awsClient.getRunAsync(GetRunRequest().withArn(runArn)).get().run.let {
+                println("RunTest status: ${it.status}")
+                if (it.status != "COMPLETED") {
+                    Timer().schedule(object : TimerTask() {
+                        override fun run() {
+                            checkRun(runArn)
+                        }
+                    }, 2L)
+                } else {
+                    println("RunTest result: ${it.result}")
+                    when (it.result) {
+                        "PASSED" -> System.exit(0)
+                        else -> System.exit(1)
+                    }
+
+                }
+            }
+        } catch (exception: ExecutionException) {
+            exception.cause?.printStackTrace()
+            System.exit(1)
         }
     }
 
