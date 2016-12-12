@@ -1,6 +1,6 @@
 apply plugin: "kotlin"
 
-group 'com.philipesteiff.dfh'
+group 'com.philipesteiff.mobile.devicefarm'
 version '1.0-SNAPSHOT'
 
 repositories {

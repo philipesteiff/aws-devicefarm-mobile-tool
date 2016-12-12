@@ -1,4 +1,4 @@
-package com.philipesteiff.dfh.cli
+package com.philipesteiff.mobile.devicefarm.cli
 
 import org.apache.commons.cli.*
 

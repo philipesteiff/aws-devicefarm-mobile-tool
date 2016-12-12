@@ -1,9 +1,9 @@
-package com.philipesteiff.dfh
+package com.philipesteiff.mobile.devicefarm
 
-import com.philipesteiff.dfh.aws.DeviceFarm.*
+import com.philipesteiff.mobile.devicefarm.aws.DeviceFarm.*
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider
 import com.amazonaws.regions.Regions
-import com.philipesteiff.dfh.cli.Command
+import com.philipesteiff.mobile.devicefarm.cli.Command
 import org.apache.commons.cli.*
 
 fun main(args: Array<String>) {

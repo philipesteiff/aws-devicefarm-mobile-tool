@@ -1,4 +1,4 @@
-package com.philipesteiff.dfh.aws
+package com.philipesteiff.mobile.devicefarm.aws
 
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.regions.Region
