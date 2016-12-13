@@ -93,7 +93,6 @@ fun parseArguments(
                     .desc("Path to the manifest file or the .apk of the application.")
                     .hasArg()
                     .argName(".apk or manifest")
-                    .required()
                     .type(String::class.java)
                     .build()
         }
