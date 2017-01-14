@@ -1,0 +1,14 @@
+language: java
+jdk:
+  - oraclejdk8
+
+# Code coverage
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+# cache between builds
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/.gradle
+
