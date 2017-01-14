@@ -1,4 +1,4 @@
-package com.philipesteiff.mobile.devicefarm.cli
+package com.philipesteiff.mobile.devicefarm.commandline
 
 import org.apache.commons.cli.CommandLine
 import org.apache.commons.cli.Option
@@ -14,41 +14,37 @@ class Command(parameters: Array<String>) {
     CommandInput.parse({
       addArgs { parameters }
       addOption {
-        Option.builder("p")
-          .longOpt("project")
-          .desc("Path to the manifest file or the .apk of the application.")
+        Option.builder("project")
+          .desc("Project name in Device Farm console.")
           .hasArg()
-          .argName(".apk or manifest")
+          .argName("Just the project name.")
           .required()
           .type(String::class.java)
           .build()
       }
       addOption {
-        Option.builder("ap")
-          .longOpt("appPath")
-          .desc("Path to the manifest file or the .apk of the application.")
+        Option.builder("appPath")
+          .desc("Path to the .apk of the application.")
           .hasArg()
-          .argName(".apk or manifest")
+          .argName(".apk")
           .required()
           .type(String::class.java)
           .build()
       }
       addOption {
-        Option.builder("tp")
-          .longOpt("testPath")
-          .desc("Path to the manifest file or the .apk of the application.")
+        Option.builder("testPath")
+          .desc("Path to the test .apk of the application.")
           .hasArg()
-          .argName(".apk or manifest")
+          .argName(".apk")
           .required()
           .type(String::class.java)
           .build()
       }
       addOption {
-        Option.builder("w")
-          .longOpt("wait")
-          .desc("Path to the manifest file or the .apk of the application.")
+        Option.builder("wait")
+          .desc("Set true to wait test finish. Default is false.")
           .hasArg()
-          .argName(".apk or manifest")
+          .argName("true or false")
           .numberOfArgs(1)
           .type(Boolean::class.java)
           .build()

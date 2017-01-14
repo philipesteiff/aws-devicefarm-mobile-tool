@@ -1,10 +1,10 @@
 package com.philipesteiff.mobile.devicefarm
 
-import com.philipesteiff.mobile.devicefarm.aws.DeviceFarm.*
+import com.philipesteiff.mobile.devicefarm.client.aws.DeviceFarm.*
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider
 import com.amazonaws.regions.Regions
-import com.philipesteiff.mobile.devicefarm.aws.DeviceFarm
-import com.philipesteiff.mobile.devicefarm.cli.Command
+import com.philipesteiff.mobile.devicefarm.client.aws.DeviceFarm
+import com.philipesteiff.mobile.devicefarm.commandline.Command
 
 fun main(parameters: Array<String>) {
   val deviceFarm = DeviceFarmConfigure.buildWith {

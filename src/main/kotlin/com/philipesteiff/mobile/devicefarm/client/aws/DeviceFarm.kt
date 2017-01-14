@@ -1,27 +1,21 @@
-package com.philipesteiff.mobile.devicefarm.aws
+package com.philipesteiff.mobile.devicefarm.client.aws
 
 import com.amazonaws.auth.AWSCredentials
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.devicefarm.AWSDeviceFarmAsyncClient
 import com.amazonaws.services.devicefarm.model.*
-import org.apache.http.Header
-import org.apache.http.HttpResponse
-import org.apache.http.client.HttpClient
-import org.apache.http.client.ResponseHandler
 import org.apache.http.client.methods.HttpPut
-import org.apache.http.entity.ContentType
 import org.apache.http.entity.FileEntity
-import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.impl.client.HttpClients
 import java.io.File
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 
-class DeviceFarm(val awsClient: AWSDeviceFarmAsyncClient) {
+class DeviceFarm(
+  val awsClient: AWSDeviceFarmAsyncClient
+) {
 
   enum class AWSUploadType(val type: UploadType) {
     ANDROID_APP(UploadType.ANDROID_APP), // An Android upload.
