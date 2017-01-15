@@ -1,41 +1,53 @@
 apply plugin: "kotlin"
+apply plugin: 'jacoco'
 
 group 'com.philipesteiff.mobile.devicefarm'
 version '1.0-SNAPSHOT'
 
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 buildscript {
-    ext.kotlin_version = '1.0.6'
-    repositories {
-        mavenCentral()
-    }
+  ext.kotlin_version = '1.0.6'
+  repositories {
+    mavenCentral()
+  }
 
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+  }
 }
 
 sourceSets {
-    main.kotlin.srcDirs += 'src/main/kotlin'
-    test.kotlin.srcDirs += 'src/test/kotlin'
+  main.kotlin.srcDirs += 'src/main/kotlin'
+  test.kotlin.srcDirs += 'src/test/kotlin'
 }
 
 jar {
-    manifest {
-        attributes 'Main-Class': 'com.philipesteiff.mobile.devicefarm.DeviceFarmToolKt'
-    }
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+  manifest {
+    attributes 'Main-Class': 'com.philipesteiff.mobile.devicefarm.DeviceFarmToolKt'
+  }
+  from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    compile "commons-cli:commons-cli:1.3.1"
-    compile "com.amazonaws:aws-java-sdk-devicefarm:1.11.66"
+jacocoTestReport {
+  reports {
+    xml.enabled = true
+    html.enabled = true
+  }
+}
+check.dependsOn jacocoTestReport
 
-    testCompile "junit:junit:4.12"
-    testCompile "org.hamcrest:hamcrest-all:1.3"
-    testCompile "org.mockito:mockito-all:1.10.19"
+dependencies {
+  compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  compile "commons-cli:commons-cli:1.3.1"
+  compile "com.amazonaws:aws-java-sdk-devicefarm:1.11.66"
+
+  testCompile "junit:junit:4.12"
+  testCompile "org.hamcrest:hamcrest-all:1.3"
+  testCompile "org.mockito:mockito-all:1.10.19"
 }
