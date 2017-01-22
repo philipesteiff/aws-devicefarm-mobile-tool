@@ -50,6 +50,18 @@ class DeviceFarm(
     .firstOrNull()
     ?: throw RuntimeException("Device Pool `$devicePoolName` not found.")
 
+  fun upload(projectArn: String, path: String, awsUploadType: AWSUploadType): Upload {
+    return awsClient.createUploadAsync(
+      CreateUploadRequest()
+        .withProjectArn(projectArn)
+        .withType(awsUploadType.type)
+        .withName(Paths.get(path).fileName.toString())
+        .withContentType("application/octet-stream"))
+      .get().upload
+      .let { uploadApp(path, it) }
+  }
+
+  @Deprecated("Deprecated")
   fun upload(projectArn: String, path: String, awsUploadType: AWSUploadType, uploadSuccess: (Upload) -> Unit) {
     return awsClient.createUploadAsync(
       CreateUploadRequest()
@@ -62,6 +74,24 @@ class DeviceFarm(
       .let { uploadApp(path, it, uploadSuccess) }
   }
 
+  private fun uploadApp(appPath: String, upload: Upload): Upload {
+    val httpClient = HttpClients.createDefault()
+    val httpPut = HttpPut(upload.url).apply {
+      addHeader("Content-Type", "application/octet-stream")
+      entity = FileEntity(File(appPath))
+    }
+
+    val response = httpClient.execute(httpPut)
+    return when (response.statusLine.statusCode) {
+      200 -> upload
+      else -> throw Exception("Upload Error: " +
+        "StatusCode: ${response.statusLine.statusCode}" +
+        "Reason: ${response.statusLine.reasonPhrase}"
+      )
+    }
+  }
+
+  @Deprecated("Deprecated")
   private fun uploadApp(appPath: String, upload: Upload, uploadSuccess: (Upload) -> Unit) {
     try {
       HttpClients.createDefault().apply {
@@ -85,6 +115,25 @@ class DeviceFarm(
     }
   }
 
+  fun uploadProcessingStatus(appArn: String) {
+    val upload = awsClient.getUploadAsync(GetUploadRequest().withArn(appArn)).get().upload
+    upload.apply {
+      println("Upload status: $status")
+      when (status) {
+        "INITIALIZED", "PROCESSING" -> {
+          Timer().schedule(object : TimerTask() {
+            override fun run() {
+              uploadProcessingStatus(appArn)
+            }
+          }, 2L)
+        }
+        "SUCCEEDED" -> return
+        "FAILED" -> throw Exception("Processing upload failed.")
+      }
+    }
+  }
+
+  @Deprecated("Deprecated")
   fun uploadProcessingStatus(appArn: String, processingSuccess: () -> Unit) {
     awsClient.getUploadAsync(GetUploadRequest().withArn(appArn)).get().let {
       it.upload.apply {

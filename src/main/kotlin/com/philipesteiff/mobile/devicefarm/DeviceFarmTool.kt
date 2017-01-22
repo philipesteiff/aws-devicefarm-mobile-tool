@@ -1,10 +1,12 @@
 package com.philipesteiff.mobile.devicefarm
 
-import com.philipesteiff.mobile.devicefarm.client.aws.DeviceFarm.*
 import com.amazonaws.auth.EnvironmentVariableCredentialsProvider
 import com.amazonaws.regions.Regions
 import com.philipesteiff.mobile.devicefarm.client.aws.DeviceFarm
+import com.philipesteiff.mobile.devicefarm.client.aws.DeviceFarm.AWSUploadType
+import com.philipesteiff.mobile.devicefarm.client.aws.DeviceFarm.DeviceFarmConfigure
 import com.philipesteiff.mobile.devicefarm.commandline.Command
+import java.util.concurrent.CompletableFuture
 
 fun main(parameters: Array<String>) {
   val deviceFarm = DeviceFarmConfigure.buildWith {
@@ -18,6 +20,7 @@ fun main(parameters: Array<String>) {
 class DeviceFarmTool(val command: Command, val deviceFarm: DeviceFarm) {
 
   fun start() {
+
     val project = deviceFarm.findProjectByName(command.projectName)
     val projectArn = project.arn
     println("Retrieved project: $project")
@@ -26,24 +29,20 @@ class DeviceFarmTool(val command: Command, val deviceFarm: DeviceFarm) {
     val devicePoolArn = devicePool.arn
     println("Retrieved devicePool: $devicePool")
 
-    // TODO Remove callbackhell
-    deviceFarm.upload(projectArn, command.appPath, AWSUploadType.ANDROID_APP) { upload ->
-      val appArn = upload.arn
-      println("Start upload App: $upload")
-      deviceFarm.uploadProcessingStatus(appArn) {
-        println("Upload app finished: $upload")
-        deviceFarm.upload(projectArn, command.testPath, AWSUploadType.INSTRUMENTATION_TEST_PACKAGE) { upload ->
-          val testArn = upload.arn
-          println("Start upload test: $upload")
-          deviceFarm.uploadProcessingStatus(testArn) {
-            println("Upload test finished: $upload")
-            deviceFarm.createRunTest(projectArn, appArn, testArn, devicePoolArn) { run ->
-              deviceFarm.checkRun(run.arn)
-            }
-          }
-        }
+    val uploadApp = CompletableFuture
+      .supplyAsync { deviceFarm.upload(projectArn, command.appPath, AWSUploadType.ANDROID_APP) }
+      .thenApply { upload -> deviceFarm.uploadProcessingStatus(upload.arn); upload }
+
+    val uploadAppTest = CompletableFuture
+      .supplyAsync { deviceFarm.upload(projectArn, command.testPath, AWSUploadType.INSTRUMENTATION_TEST_PACKAGE) }
+      .thenApply { upload -> deviceFarm.uploadProcessingStatus(upload.arn); upload }
+
+    uploadApp.thenCombine(uploadAppTest) { uploadApp, uploadAppTest ->
+      deviceFarm.createRunTest(projectArn, uploadApp.arn, uploadAppTest.arn, devicePoolArn) { run ->
+        deviceFarm.checkRun(run.arn)
       }
     }
+
   }
 
 }
