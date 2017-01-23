@@ -13,9 +13,7 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.ExecutionException
 
-class DeviceFarm(
-  val awsClient: AWSDeviceFarmAsyncClient
-) {
+class DeviceFarm(val awsClient: AWSDeviceFarmAsyncClient) {
 
   enum class AWSUploadType(val type: UploadType) {
     ANDROID_APP(UploadType.ANDROID_APP), // An Android upload.
@@ -50,7 +48,7 @@ class DeviceFarm(
     .firstOrNull()
     ?: throw RuntimeException("Device Pool `$devicePoolName` not found.")
 
-  fun upload(projectArn: String, path: String, awsUploadType: AWSUploadType): Upload {
+  fun upload(projectArn: String, path: String, awsUploadType: AWSUploadType): String {
     return awsClient.createUploadAsync(
       CreateUploadRequest()
         .withProjectArn(projectArn)
@@ -58,7 +56,7 @@ class DeviceFarm(
         .withName(Paths.get(path).fileName.toString())
         .withContentType("application/octet-stream"))
       .get().upload
-      .let { uploadApp(path, it) }
+      .let { uploadApp(path, it).arn }
   }
 
   @Deprecated("Deprecated")
