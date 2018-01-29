@@ -23,22 +23,20 @@ class DeviceFarmTool(val command: Command, val deviceFarm: DeviceFarm) {
 
     val project = deviceFarm.findProjectByName(command.projectName)
     val projectArn = project.arn
-    println("Retrieved project: $project")
 
     val devicePool = deviceFarm.findDevicePoolByName(projectArn, "device-pool-test")
     val devicePoolArn = devicePool.arn
-    println("Retrieved devicePool: $devicePool")
 
     val uploadApp = CompletableFuture
       .supplyAsync { deviceFarm.upload(projectArn, command.appPath, AWSUploadType.ANDROID_APP) }
-      .thenApply { upload -> deviceFarm.uploadProcessingStatus(upload.arn); upload }
+      .thenApply { arn -> deviceFarm.uploadProcessingStatus(arn); arn }
 
     val uploadAppTest = CompletableFuture
       .supplyAsync { deviceFarm.upload(projectArn, command.testPath, AWSUploadType.INSTRUMENTATION_TEST_PACKAGE) }
-      .thenApply { upload -> deviceFarm.uploadProcessingStatus(upload.arn); upload }
+      .thenApply { arn -> deviceFarm.uploadProcessingStatus(arn); arn }
 
-    uploadApp.thenCombine(uploadAppTest) { uploadApp, uploadAppTest ->
-      deviceFarm.createRunTest(projectArn, uploadApp.arn, uploadAppTest.arn, devicePoolArn) { run ->
+    uploadApp.thenCombine(uploadAppTest) { appArn, appTestArn ->
+      deviceFarm.createRunTest(projectArn, appArn, appTestArn, devicePoolArn) { run ->
         deviceFarm.checkRun(run.arn)
       }
     }
